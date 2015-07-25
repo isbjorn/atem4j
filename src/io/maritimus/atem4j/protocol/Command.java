@@ -71,8 +71,28 @@ public abstract class Command {
 
         //int divEnd = body.getInt();
 
+
         Command cmd;
         switch (command) {
+            /*
+            case "CPvI":
+                // 4 bytes
+                int me = body.get() & 0xFF;
+                int uc1 = body.get() & 0xFF;
+                int videoSource = body.getChar();
+                cmd = new CmdSetPreviewInput(me, videoSource);
+                break;
+
+            case "PrvI":
+                // 8 bytes
+                int me = body.get() & 0xFF;
+                int uc1 = body.get() & 0xFF;
+                int videoSource = body.getChar();
+                int uc2 = body.getInt();
+                cmd = new CmdPreviewInput(me, videoSource);
+                break;
+            */
+
             default:
                 String payloadHex = DatatypeConverter.printHexBinary(payload).toUpperCase();
                 cmd = new CmdUnknown(command, blockSize, payloadHex);
