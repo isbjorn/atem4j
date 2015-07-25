@@ -21,10 +21,15 @@ import com.sun.istack.internal.NotNull;
  * Created by Oleg Akimov on 25/07/15.
  */
 public class CmdUnknown extends Command {
+    public final String command;
     public final int blockSize;  // block blockSize (payload + 2 bytes for blockSize + N bytes for dividers)
     public final String payloadHex;
 
-    public CmdUnknown(int blockSize, @NotNull String payloadHex) {
+    public CmdUnknown(@NotNull String command, int blockSize, @NotNull String payloadHex) {
+        if (command == null) {
+            throw new IllegalArgumentException("command must be not null");
+        }
+
         if (blockSize <= 0) {
             throw new IllegalArgumentException(String.format("blockSize must be positive, the given blockSize is %d", blockSize));
         }
@@ -33,12 +38,13 @@ public class CmdUnknown extends Command {
             throw new IllegalArgumentException("payloadHex must be not null");
         }
 
+        this.command = command;
         this.blockSize = blockSize;
         this.payloadHex = payloadHex;
     }
 
     @Override
     public String toString() {
-        return String.format("CmdUnknown size=%d payload=%s", blockSize, payloadHex);
+        return String.format("CmdUnknown command=%s size=%d payload=%s", command, blockSize, payloadHex);
     }
 }

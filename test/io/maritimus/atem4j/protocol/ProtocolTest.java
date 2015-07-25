@@ -34,6 +34,11 @@ public class ProtocolTest {
         return ByteBuffer.wrap(DatatypeConverter.parseHexBinary(str));
     }
 
+    @Test void testStringify() {
+        int rawCommand = 0x546c496e;
+        assertEquals(Command.stringify(rawCommand), "TlIn");
+    }
+
     @Test void testCharToIntConvertion() throws Exception {
         char from = 0xFFFF;
         int to = from;
@@ -54,6 +59,7 @@ public class ProtocolTest {
         assertEquals(header.packageId   , 0x002e, "packageId");
 
         CmdUnknown cmd1 = (CmdUnknown)Command.read(buf);
+        assertEquals(cmd1.command       , "CPvI");
         assertEquals(cmd1.blockSize     , 0x000c, "cmd1 block size");
         assertEquals(cmd1.payloadHex    , "3e74435076490004c0d5".toUpperCase(), "cmd1 payload");
     }
@@ -75,10 +81,12 @@ public class ProtocolTest {
         assertEquals(header.ackId       , 0x002e, "ackId");
 
         CmdUnknown cmd1 = (CmdUnknown)Command.read(buf);
+        assertEquals(cmd1.command       , "TlIn");
         assertEquals(cmd1.blockSize     , 0x0014, "cmd1 block size");
         assertEquals(cmd1.payloadHex    , "0000546c496e000801000002000000000000".toUpperCase(), "cmd1 payload");
 
         CmdUnknown cmd2 = (CmdUnknown)Command.read(buf);
+        assertEquals(cmd2.command       , "PrvI");
         assertEquals(cmd2.blockSize     , 0x000C, "cmd2 block size");
         assertEquals(cmd2.payloadHex    , "00005072764900040000".toUpperCase(), "cmd2 payload");
 

@@ -24,6 +24,15 @@ import java.nio.ByteBuffer;
  * Created by Oleg Akimov on 25/07/15.
  */
 public abstract class Command {
+    
+    public static String stringify (int rawCommand) {
+        String command = "" +
+                (char)((rawCommand >> 24) & 0xFF) +
+                (char)((rawCommand >> 16) & 0xFF) +
+                (char)((rawCommand >> 8) & 0xFF) +
+                (char)(rawCommand & 0xFF);
+        return command;
+    }
 
     public static Command read(@NotNull ByteBuffer buf) {
         if (buf == null) {
@@ -55,15 +64,18 @@ public abstract class Command {
         buf.get(payload);
 
         ByteBuffer body = ByteBuffer.wrap(payload);
-        int divStart = body.getInt();
-        int command = body.getInt();
+        int divStart = body.getChar();
+
+        int rawCommand = body.getInt();
+        String command = stringify(rawCommand);
+
         //int divEnd = body.getInt();
 
         Command cmd;
         switch (command) {
             default:
                 String payloadHex = DatatypeConverter.printHexBinary(payload).toUpperCase();
-                cmd = new CmdUnknown(blockSize, payloadHex);
+                cmd = new CmdUnknown(command, blockSize, payloadHex);
                 break;
         }
 
