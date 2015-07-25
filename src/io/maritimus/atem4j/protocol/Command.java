@@ -24,15 +24,6 @@ import java.nio.ByteBuffer;
  * Created by Oleg Akimov on 25/07/15.
  */
 public abstract class Command {
-    public final int blockSize;  // block blockSize (payload + 2 bytes for blockSize + N bytes for dividers)
-
-    protected Command (int blockSize) {
-        if (blockSize <= 0) {
-            throw new IllegalArgumentException(String.format("blockSize must be positive, the given blockSize is %d", blockSize));
-        }
-
-        this.blockSize = blockSize;
-    }
 
     public static Command read(@NotNull ByteBuffer buf) {
         if (buf == null) {
