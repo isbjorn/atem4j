@@ -30,6 +30,8 @@ import static org.testng.Assert.*;
  */
 public class ProtocolTest {
 
+    private static final Logger log = LoggerFactory.getLogger(ProtocolTest.class);
+
     public static ByteBuffer parseHexString(String str) {
         return ByteBuffer.wrap(DatatypeConverter.parseHexBinary(str));
     }
@@ -69,22 +71,46 @@ public class ProtocolTest {
         ByteBuffer buf = parseHexString("882c8001002e00000000002300140000546c496e000801000002000000000000000c00005072764900040000");
 
         PacketHeader header = PacketHeader.read(buf);
-        assertEquals(header.bitmask     , PacketHeader.FLAG_ACKREQ | PacketHeader.FLAG_ACK, "bitmask");
-        assertEquals(header.size        , 12 + 20 + 12, "blockSize");
-        assertEquals(header.uid         , 0x8001, "uid");
-        assertEquals(header.unicorn     , 0x0, "unicorn");
+        assertEquals(header.bitmask, PacketHeader.FLAG_ACKREQ | PacketHeader.FLAG_ACK, "bitmask");
+        assertEquals(header.size, 12 + 20 + 12, "blockSize");
+        assertEquals(header.uid, 0x8001, "uid");
+        assertEquals(header.unicorn, 0x0, "unicorn");
 
         assertTrue((PacketHeader.FLAG_ACKREQ | header.bitmask) > 0, "this is request for ack from you");
-        assertEquals(header.packageId   , 0x0023, "packageId");
+        assertEquals(header.packageId, 0x0023, "packageId");
 
         assertTrue((PacketHeader.FLAG_ACK | header.bitmask) > 0, "this is ack for your request");
-        assertEquals(header.ackId       , 0x002e, "ackId");
+        assertEquals(header.ackId, 0x002e, "ackId");
 
-        CmdUnknown cmd1 = (CmdUnknown)Command.read(buf);
-        assertEquals(cmd1.command       , "TlIn");
-        assertEquals(cmd1.blockSize     , 0x0014, "cmd1 block size");
-        assertEquals(cmd1.payloadHex    , "0000546c496e000801000002000000000000".toUpperCase(), "cmd1 payload");
+        // cmd1
+        CmdTallyByIndex cmd1 = (CmdTallyByIndex)Command.read(buf);
+        assertEquals(cmd1.flags,
+                new byte[]{CmdTallyByIndex.FLAG_PROGRAM, 0, 0, CmdTallyByIndex.FLAG_PREVIEW, 0, 0, 0, 0},
+                "flags");
 
+        assertEquals(cmd1.length, 8, "cmd1 length");
+
+        assertTrue(cmd1.isOnProgram(0));
+        assertFalse(cmd1.isOnPreview(0));
+
+        assertFalse(cmd1.isOnProgram(1));
+        assertFalse(cmd1.isOnPreview(1));
+        assertFalse(cmd1.isOnProgram(2));
+        assertFalse(cmd1.isOnPreview(2));
+
+        assertFalse(cmd1.isOnProgram(3));
+        assertTrue(cmd1.isOnPreview(3));
+
+        assertFalse(cmd1.isOnProgram(4));
+        assertFalse(cmd1.isOnPreview(4));
+        assertFalse(cmd1.isOnProgram(5));
+        assertFalse(cmd1.isOnPreview(5));
+        assertFalse(cmd1.isOnProgram(6));
+        assertFalse(cmd1.isOnPreview(6));
+        assertFalse(cmd1.isOnProgram(7));
+        assertFalse(cmd1.isOnPreview(7));
+
+        // cmd2
         CmdUnknown cmd2 = (CmdUnknown)Command.read(buf);
         assertEquals(cmd2.command       , "PrvI");
         assertEquals(cmd2.blockSize     , 0x000C, "cmd2 block size");

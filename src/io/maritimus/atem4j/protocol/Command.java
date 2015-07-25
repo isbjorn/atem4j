@@ -24,7 +24,7 @@ import java.nio.ByteBuffer;
  * Created by Oleg Akimov on 25/07/15.
  */
 public abstract class Command {
-    
+
     public static String stringify (int rawCommand) {
         String command = "" +
                 (char)((rawCommand >> 24) & 0xFF) +
@@ -92,6 +92,13 @@ public abstract class Command {
                 cmd = new CmdPreviewInput(me, videoSource);
                 break;
             */
+
+            case "TlIn":
+                int length = body.getChar();    // 0 - 20, remaining must = (length * 1 byte) + (devEnd = 4 bytes)
+                byte[] flags = new byte[length];
+                body.get(flags);
+                cmd = new CmdTallyByIndex(flags);
+                break;
 
             default:
                 String payloadHex = DatatypeConverter.printHexBinary(payload).toUpperCase();
