@@ -53,19 +53,24 @@ public abstract class Command {
         }
 
         if (buf.remaining() < payloadSize) {
+            int remaining = buf.remaining();
+            String payloadHex = DatatypeConverter.printHexBinary(buf.array()).toUpperCase();
             throw new IllegalArgumentException(String.format(
-                    "buf remaining = %d, this is to short for payload with blockSize: %d",
-                    buf.remaining(),
+                    "buf remaining = %d, this is to short for payload %s with blockSize = %d and payloadSize = %d",
+                    remaining,
+                    payloadHex,
+                    blockSize,
                     payloadSize
             ));
         }
 
-        byte[] payload = new byte[payloadSize];
+        byte[] payload = new byte[blockSize];
+        buf.position(buf.position() - 2);
         buf.get(payload);
 
         ByteBuffer body = ByteBuffer.wrap(payload);
+        int blockSize2 = body.getChar(); // == blockSize
         int divStart = body.getChar();
-
         int rawCommand = body.getInt();
         String command = stringify(rawCommand);
 
