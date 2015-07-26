@@ -45,6 +45,6 @@ public class CmdUnknown extends Command {
 
     @Override
     public String toString() {
-        return String.format("CmdUnknown command=%s size=%d payload=%s", command, blockSize, payloadHex);
+        return String.format("%s command=%s size=%d payload=%s", getClass().getSimpleName(), command, blockSize, payloadHex);
     }
 }

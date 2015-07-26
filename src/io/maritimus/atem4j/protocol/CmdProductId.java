@@ -16,24 +16,20 @@
 
 package io.maritimus.atem4j.protocol;
 
-/**
- * Created by Oleg Akimov on 25/07/15.
- */
-public class CmdPreviewInput extends Command {
-    public final int me;
-    public final int uc1;
-    public final int videoSource;
-    public final int uc2;
+import com.sun.istack.internal.NotNull;
 
-    public CmdPreviewInput(int me, int uc1, int videoSource, int uc2) {
-        this.me = me;
-        this.uc1 = uc1;
-        this.videoSource = videoSource;
-        this.uc2 = uc2;
+/**
+ * Created by Oleg Akimov on 26/07/15.
+ */
+public class CmdProductId extends Command {
+    public final String name;
+
+    public CmdProductId(@NotNull String name) {
+        this.name = name;
     }
 
     @Override
     public String toString() {
-        return String.format("%s me=%d videoSource=%d", getClass().getSimpleName(), me, videoSource);
+        return String.format("%s name=%s", getClass().getSimpleName(), name);
     }
 }

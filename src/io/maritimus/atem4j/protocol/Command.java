@@ -46,13 +46,13 @@ public abstract class Command {
         }
 
         int blockSize = buf.getChar();
-        int payloadSize = blockSize - 2;
+        int payloadSize = blockSize - 2 /* size */ - 2 /* div start */ - 4 /* command */;
 
         if (blockSize < 2) {
             throw new IllegalArgumentException("buf contains broken payload block with blockSize = %d");
         }
 
-        if (buf.remaining() < payloadSize) {
+        if (buf.remaining() < blockSize - 2) {
             int remaining = buf.remaining();
             String payloadHex = DatatypeConverter.printHexBinary(buf.array()).toUpperCase();
             throw new IllegalArgumentException(String.format(
@@ -74,9 +74,6 @@ public abstract class Command {
         int rawCommand = body.getInt();
         String command = stringify(rawCommand);
 
-        //int divEnd = body.getInt();
-
-
         Command cmd;
         switch (command) {
             /*
@@ -87,22 +84,77 @@ public abstract class Command {
                 int videoSource = body.getChar();
                 cmd = new CmdSetPreviewInput(me, videoSource);
                 break;
-
-            case "PrvI":
-                // 8 bytes
-                int me = body.get() & 0xFF;
-                int uc1 = body.get() & 0xFF;
-                int videoSource = body.getChar();
-                int uc2 = body.getInt();
-                cmd = new CmdPreviewInput(me, videoSource);
-                break;
             */
 
+            case "_ver":
+                int major = body.getChar();
+                int minor = body.getChar();
+                cmd = new CmdFirmwareVersion(major, minor);
+                break;
+
+            case "_pin":
+                String name = Utils.readString(body, payloadSize);
+                cmd = new CmdProductId(name);
+                break;
+
+            case "_top":
+                cmd = new CmdTopology(
+                  body.get() & 0xFF,  // int mes,
+                  body.get() & 0xFF,  // int sources,
+                  body.get() & 0xFF,  // int colorGenerators,
+                  body.get() & 0xFF,  // int auxBusses,
+                  body.get() & 0xFF,  // int downstreamKeyes,
+                  body.get() & 0xFF,  // int stingers,
+                  body.get() & 0xFF,  // int dves,
+                  body.get() & 0xFF,  // int superSources,
+                  body.get() & 0xFF,  // int uc1,
+                  (body.get() & 0b1) != 0,  // boolean hasSdOutput,
+                  body.get() & 0xFF,  // int uc2,
+                  body.get() & 0xFF   // int uc3
+                );
+                break;
+
+            case "PrgI":
+                cmd = new CmdProgramInput(
+                        body.get() & 0xFF,
+                        body.get() & 0xFF,
+                        body.getChar()
+                );
+                break;
+
+            case "PrvI":
+                cmd = new CmdPreviewInput(
+                        body.get() & 0xFF,
+                        body.get() & 0xFF,
+                        body.getChar(),
+                        body.getChar()
+                );
+                break;
+
             case "TlIn":
-                int length = body.getChar();    // 0 - 20, remaining must = (length * 1 byte) + (devEnd = 4 bytes)
+                int length = body.getChar();    // 0 - 20, remaining must = (length * 1 byte)
                 byte[] flags = new byte[length];
                 body.get(flags);
                 cmd = new CmdTallyByIndex(flags);
+                break;
+
+            case "_TlC":
+                int uc1 = body.getInt();
+                int tallyChannels = body.get() & 0xFF;
+                int uc2 = ((body.get() & 0xFF) << 16) | body.getChar();
+                cmd = new CmdTallyChannelConfig(uc1, tallyChannels, uc2);
+                break;
+
+            case "InPr":
+                cmd = CmdInputProperties.read(body);
+                break;
+
+            case "AMTl":
+                cmd = CmdAudioMixerTally.read(body);
+                break;
+
+            case "TlSr":
+                cmd = CmdTallyBySource.read(body);
                 break;
 
             default:

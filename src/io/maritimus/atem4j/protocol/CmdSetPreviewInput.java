@@ -30,6 +30,6 @@ public class CmdSetPreviewInput extends Command {
 
     @Override
     public String toString() {
-        return String.format("CmdSetPreviewInput me=%d videoSource=%d", me, videoSource);
+        return String.format("%s me=%d videoSource=%d", getClass().getSimpleName(), me, videoSource);
     }
 }

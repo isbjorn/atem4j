@@ -17,23 +17,21 @@
 package io.maritimus.atem4j.protocol;
 
 /**
- * Created by Oleg Akimov on 25/07/15.
+ * Created by Oleg Akimov on 26/07/15.
  */
-public class CmdPreviewInput extends Command {
-    public final int me;
-    public final int uc1;
-    public final int videoSource;
-    public final int uc2;
+public class CmdFirmwareVersion extends Command {
+    public final int major;
+    public final int minor;
+    public final String version;
 
-    public CmdPreviewInput(int me, int uc1, int videoSource, int uc2) {
-        this.me = me;
-        this.uc1 = uc1;
-        this.videoSource = videoSource;
-        this.uc2 = uc2;
+    public CmdFirmwareVersion(int major, int minor) {
+        this.major = major;
+        this.minor = minor;
+        this.version = String.format("%d.%d", major, minor);
     }
 
     @Override
     public String toString() {
-        return String.format("%s me=%d videoSource=%d", getClass().getSimpleName(), me, videoSource);
+        return String.format("%s version=%s", getClass().getSimpleName(), version);
     }
 }

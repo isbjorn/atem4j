@@ -17,7 +17,6 @@
 package io.maritimus.atem4j.protocol;
 
 import com.sun.istack.internal.NotNull;
-import com.sun.javaws.exceptions.InvalidArgumentException;
 
 /**
  * Created by Oleg Akimov on 25/07/15.
@@ -57,7 +56,7 @@ public class CmdTallyByIndex extends Command {
 
     @Override
     public String toString() {
-        String info = "CmdTallyByIndex";
+        String info = getClass().getSimpleName();
 
         for(int j = 0; j < flags.length; j++) {
             info = String.format("%s %d=%s%s",

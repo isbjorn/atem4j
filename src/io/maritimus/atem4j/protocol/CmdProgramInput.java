@@ -17,23 +17,28 @@
 package io.maritimus.atem4j.protocol;
 
 /**
- * Created by Oleg Akimov on 25/07/15.
+ * Created by Oleg Akimov on 26/07/15.
  */
-public class CmdPreviewInput extends Command {
+public class CmdProgramInput extends Command {
+
     public final int me;
     public final int uc1;
     public final int videoSource;
-    public final int uc2;
 
-    public CmdPreviewInput(int me, int uc1, int videoSource, int uc2) {
+    public CmdProgramInput(int me, int uc1, int videoSource) {
         this.me = me;
         this.uc1 = uc1;
         this.videoSource = videoSource;
-        this.uc2 = uc2;
     }
 
     @Override
     public String toString() {
-        return String.format("%s me=%d videoSource=%d", getClass().getSimpleName(), me, videoSource);
+        return String.format(
+                "%s me=%d, videoSource=%d uc1=%s",
+                getClass().getSimpleName(),
+                me,
+                videoSource,
+                Integer.toBinaryString(uc1)
+        );
     }
 }
