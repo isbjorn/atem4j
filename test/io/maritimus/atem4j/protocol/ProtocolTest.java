@@ -62,8 +62,8 @@ public class ProtocolTest {
 
         CmdUnknown cmd1 = (CmdUnknown)Command.read(buf);
         assertEquals(cmd1.command       , "CPvI");
-        assertEquals(cmd1.blockSize     , 0x000c, "cmd1 block size");
-        assertEquals(cmd1.payloadHex    , "3e74435076490004c0d5".toUpperCase(), "cmd1 payload");
+        assertEquals(cmd1.blockSize, 0x000c, "cmd1 block size");
+        assertEquals(cmd1.payloadHex    , "000C3E74435076490004C0D5".toUpperCase(), "cmd1 payload");
     }
 
     @Test
@@ -114,7 +114,7 @@ public class ProtocolTest {
         CmdUnknown cmd2 = (CmdUnknown)Command.read(buf);
         assertEquals(cmd2.command       , "PrvI");
         assertEquals(cmd2.blockSize     , 0x000C, "cmd2 block size");
-        assertEquals(cmd2.payloadHex    , "00005072764900040000".toUpperCase(), "cmd2 payload");
+        assertEquals(cmd2.payloadHex    , "000C00005072764900040000".toUpperCase(), "cmd2 payload");
 
         assertEquals(buf.remaining(), 0, "buf is empty");
     }
