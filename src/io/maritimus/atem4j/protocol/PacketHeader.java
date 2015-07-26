@@ -71,10 +71,31 @@ public class PacketHeader {
         this.unicorn = unicorn;
     }
 
+    public boolean isHello() {
+        return (this.bitmask & FLAG_HELLO) > 0;
+    }
+
     @Override
     public String toString() {
-        return String.format("bitmask=%s blockSize=%d uid=%d ackId=%d packageId=%d",
-                Integer.toBinaryString(bitmask), size, uid, ackId, packageId);
+        return String.format("%s\t%s%s%s%s\t\t\t%s",
+                (FLAG_ACK    & bitmask) != 0 && (size == HEADER_LENGTH) ? "        " : String.format("PKG=%3d "   , packageId),
+                (FLAG_ACK    & bitmask) == 0 ? "" : String.format("ACK=%d "   , ackId),
+                (FLAG_RESEND & bitmask) == 0 ? "" : String.format("RESEND "),
+                (FLAG_HELLO  & bitmask) == 0 ? "" : String.format("HELLO "),
+                (FLAG_ACKREQ & bitmask) == 0 ? "" : String.format("ACKREQ "),
+                humanify()
+        );
+    }
+
+    public String humanify() {
+        return String.format("bitmask=%s blockSize=%d uid=%d ackId=%d packageId=%d unicorn=%s",
+                Integer.toBinaryString(bitmask),
+                size,
+                uid,
+                ackId,
+                packageId,
+                Long.toBinaryString(unicorn)
+        );
     }
 
     public static PacketHeader read(@NotNull ByteBuffer buf) {
