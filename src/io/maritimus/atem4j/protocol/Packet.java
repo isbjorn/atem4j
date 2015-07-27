@@ -50,12 +50,18 @@ public class Packet {
 
         try {
             if (!header.isHello()) {
-                while(buf.hasRemaining()) {
+                while (buf.hasRemaining()) {
                     commands.add(Command.read(buf));
                 }
             }
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException(String.format("Can't parse packet %s", header), ex);
+        } catch (ParseException ex) {
+            throw ex;
+        } catch (Throwable ex) {
+            buf.rewind();
+            throw new ParseException(
+                    "Can't parse packet %s cause ",
+                    Utils.readHexString(buf),
+                    ex.getMessage());
         }
 
         return new Packet(header, commands);

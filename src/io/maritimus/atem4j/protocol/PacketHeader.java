@@ -98,14 +98,14 @@ public class PacketHeader {
         );
     }
 
-    public static PacketHeader read(@NotNull ByteBuffer buf) {
+    public static PacketHeader read(@NotNull ByteBuffer buf) throws ParseException {
 
         if (buf == null) {
             throw new IllegalArgumentException("buf must be not null");
         }
 
         if (buf.remaining() < HEADER_LENGTH) {
-            throw new IllegalArgumentException(String.format("buf is to short: %d", buf.remaining()));
+            throw new ParseException("buf is to short for header, remaining = %d", buf.remaining());
         }
 
         int head = (int) buf.getChar();
