@@ -224,4 +224,13 @@ public class ProtocolTest {
         assertFalse(cmd.isOnProgram(7002));
         assertFalse(cmd.isOnPreview(7002));
     }
+
+    @Test
+    public void testCmdIncm() throws Exception {
+        ByteBuffer buf = Utils.parseHexString("000C 6450 496E436D 01000000");
+
+        CmdInitializationComplete cmd = (CmdInitializationComplete)Command.read(buf);
+        assertFalse(buf.hasRemaining());
+        assertEquals(cmd.uc1, 0x01000000);
+    }
 }

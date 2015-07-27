@@ -154,6 +154,10 @@ public abstract class Command {
                 cmd = CmdTallyBySource.read(buf);
                 break;
 
+            case "InCm":
+                cmd = new CmdInitializationComplete(buf.getInt());
+                break;
+
             default:
                 buf.reset();
                 String payloadHex = Utils.readHexString(buf, blockSize);
