@@ -155,23 +155,19 @@ public abstract class Command {
                 break;
 
             default:
-                block = new byte[blockSize];
                 buf.reset();
-                buf.get(block);
-                String payloadHex = DatatypeConverter.printHexBinary(block).toUpperCase();
+                String payloadHex = Utils.readHexString(buf, blockSize);
                 cmd = new CmdUnknown(command, blockSize, payloadHex);
                 break;
         }
 
         // re-checking right buffer position
         if (buf.position() != finalPosition) {
-            boolean isOverread = buf.position() > finalPosition;
-            block = new byte[blockSize];
+            boolean isOverRead = buf.position() > finalPosition;
             buf.reset();
-            buf.get(block);
-            String payloadHex = DatatypeConverter.printHexBinary(block).toUpperCase();
+            String payloadHex = Utils.readHexString(buf, blockSize);
 
-            if (isOverread) {
+            if (isOverRead) {
                 throw new ParseException(
                         "Command %s reader overread block %s",
                         command,

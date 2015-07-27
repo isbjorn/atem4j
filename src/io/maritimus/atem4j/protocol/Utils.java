@@ -77,4 +77,14 @@ public class Utils {
     public static ByteBuffer parseHexString(String str) {
         return ByteBuffer.wrap(DatatypeConverter.parseHexBinary(str.replace(" ", "")));
     }
+
+    public static String readHexString(ByteBuffer buf) {
+        return readHexString(buf, 0);
+    }
+
+    public static String readHexString(ByteBuffer buf, int length) {
+        byte[] block = new byte[length == 0 ? buf.remaining() : length];
+        buf.get(block);
+        return DatatypeConverter.printHexBinary(block).toUpperCase();
+    }
 }
