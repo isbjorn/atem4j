@@ -25,56 +25,48 @@ import java.nio.ByteBuffer;
  */
 public abstract class Command {
 
-    public static String stringify (int rawCommand) {
-        String command = "" +
-                (char)((rawCommand >> 24) & 0xFF) +
-                (char)((rawCommand >> 16) & 0xFF) +
-                (char)((rawCommand >> 8) & 0xFF) +
-                (char)(rawCommand & 0xFF);
-        return command;
-    }
-
-    public static Command read(@NotNull ByteBuffer buf) {
+    public static Command read(@NotNull ByteBuffer buf) throws ParseException {
         if (buf == null) {
             throw new IllegalArgumentException("buf must be not null");
         }
 
         if (buf.remaining() < 2) {
-            throw new IllegalArgumentException(String.format(
+            throw new ParseException(
                     "buf remaining = %d is to short for next payload",
-                    buf.remaining()));
+                    buf.remaining()
+            );
         }
 
+        buf.mark();
+        
         int blockSize = buf.getChar();
         int payloadSize = blockSize - 2 /* size */ - 2 /* div start */ - 4 /* command */;
+        int finalPosition = buf.position() + blockSize - 2;
 
         if (blockSize < 2) {
-            throw new IllegalArgumentException("buf contains broken payload block with blockSize = %d");
+            throw new ParseException(
+                    "buf contains broken payload block with blockSize = %d",
+                    blockSize
+            );
         }
 
         if (buf.remaining() < blockSize - 2) {
             int remaining = buf.remaining();
             String payloadHex = DatatypeConverter.printHexBinary(buf.array()).toUpperCase();
-            throw new IllegalArgumentException(String.format(
-                    "buf remaining = %d, this is to short for payload %s with blockSize = %d and payloadSize = %d",
+            throw new ParseException(
+                    "buf remaining = %d is to short for payload with blockSize = %d and payloadSize = %d : %s",
                     remaining,
-                    payloadHex,
                     blockSize,
-                    payloadSize
-            ));
+                    payloadSize,
+                    payloadHex
+            );
         }
 
-        byte[] payload = new byte[blockSize];
-        buf.position(buf.position() - 2);
-        buf.get(payload);
-
-        ByteBuffer body = ByteBuffer.wrap(payload);
-        int blockSize2 = body.getChar(); // == blockSize
-        int divStart = body.getChar();
-        int rawCommand = body.getInt();
-        String command = stringify(rawCommand);
-
+        int divStart = buf.getChar();
+        int rawCommand = buf.getInt();
+        String command = Utils.stringifyCommand(rawCommand);
         Command cmd;
+
         switch (command) {
             /*
             case "CPvI":
@@ -87,80 +79,97 @@ public abstract class Command {
             */
 
             case "_ver":
-                int major = body.getChar();
-                int minor = body.getChar();
+                int major = buf.getChar();
+                int minor = buf.getChar();
                 cmd = new CmdFirmwareVersion(major, minor);
                 break;
 
             case "_pin":
-                String name = Utils.readString(body, payloadSize);
+                String name = Utils.readString(buf, payloadSize);
                 cmd = new CmdProductId(name);
                 break;
 
             case "_top":
                 cmd = new CmdTopology(
-                  body.get() & 0xFF,  // int mes,
-                  body.get() & 0xFF,  // int sources,
-                  body.get() & 0xFF,  // int colorGenerators,
-                  body.get() & 0xFF,  // int auxBusses,
-                  body.get() & 0xFF,  // int downstreamKeyes,
-                  body.get() & 0xFF,  // int stingers,
-                  body.get() & 0xFF,  // int dves,
-                  body.get() & 0xFF,  // int superSources,
-                  body.get() & 0xFF,  // int uc1,
-                  (body.get() & 0b1) != 0,  // boolean hasSdOutput,
-                  body.get() & 0xFF,  // int uc2,
-                  body.get() & 0xFF   // int uc3
+                  buf.get() & 0xFF,  // int mes,
+                  buf.get() & 0xFF,  // int sources,
+                  buf.get() & 0xFF,  // int colorGenerators,
+                  buf.get() & 0xFF,  // int auxBusses,
+                  buf.get() & 0xFF,  // int downstreamKeyes,
+                  buf.get() & 0xFF,  // int stingers,
+                  buf.get() & 0xFF,  // int dves,
+                  buf.get() & 0xFF,  // int superSources,
+                  buf.get() & 0xFF,  // int uc1,
+                  (buf.get() & 0b1) != 0,  // boolean hasSdOutput,
+                  buf.get() & 0xFF,  // int uc2,
+                  buf.get() & 0xFF   // int uc3
                 );
                 break;
 
             case "PrgI":
                 cmd = new CmdProgramInput(
-                        body.get() & 0xFF,
-                        body.get() & 0xFF,
-                        body.getChar()
+                        buf.get() & 0xFF,
+                        buf.get() & 0xFF,
+                        buf.getChar()
                 );
                 break;
 
             case "PrvI":
                 cmd = new CmdPreviewInput(
-                        body.get() & 0xFF,
-                        body.get() & 0xFF,
-                        body.getChar(),
-                        body.getChar()
+                        buf.get() & 0xFF,
+                        buf.get() & 0xFF,
+                        buf.getChar(),
+                        buf.getInt()
                 );
                 break;
 
             case "TlIn":
-                int length = body.getChar();    // 0 - 20, remaining must = (length * 1 byte)
+                int length = buf.getChar();    // 0 - 20, remaining must = (length * 1 byte)
                 byte[] flags = new byte[length];
-                body.get(flags);
+                buf.get(flags);
                 cmd = new CmdTallyByIndex(flags);
                 break;
 
             case "_TlC":
-                int uc1 = body.getInt();
-                int tallyChannels = body.get() & 0xFF;
-                int uc2 = ((body.get() & 0xFF) << 16) | body.getChar();
+                int uc1 = buf.getInt();
+                int tallyChannels = buf.get() & 0xFF;
+                int uc2 = ((buf.get() & 0xFF) << 16) | buf.getChar();
                 cmd = new CmdTallyChannelConfig(uc1, tallyChannels, uc2);
                 break;
 
             case "InPr":
-                cmd = CmdInputProperties.read(body);
+                cmd = CmdInputProperties.read(buf);
                 break;
 
             case "AMTl":
-                cmd = CmdAudioMixerTally.read(body);
+                cmd = CmdAudioMixerTally.read(buf);
+                if (buf.position() < finalPosition) {
+                    buf.position(finalPosition);
+                }
+
                 break;
 
             case "TlSr":
-                cmd = CmdTallyBySource.read(body);
+                cmd = CmdTallyBySource.read(buf);
                 break;
 
             default:
+                byte[] payload = new byte[blockSize];
+                buf.reset();
+                buf.get(payload);
                 String payloadHex = DatatypeConverter.printHexBinary(payload).toUpperCase();
                 cmd = new CmdUnknown(command, blockSize, payloadHex);
                 break;
+        }
+
+        // re-checking right buffer position
+        if (buf.position() != finalPosition) {
+            throw new ParseException(
+                    "Command %s reader miss buf final position, expecting = %d, actual = %d",
+                    command,
+                    finalPosition,
+                    buf.position()
+            );
         }
 
         return cmd;

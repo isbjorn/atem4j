@@ -19,8 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-import javax.xml.bind.DatatypeConverter;
-
 import java.nio.ByteBuffer;
 
 import static org.testng.Assert.*;
@@ -32,13 +30,9 @@ public class ProtocolTest {
 
     private static final Logger log = LoggerFactory.getLogger(ProtocolTest.class);
 
-    public static ByteBuffer parseHexString(String str) {
-        return ByteBuffer.wrap(DatatypeConverter.parseHexBinary(str));
-    }
-
     @Test void testStringify() {
         int rawCommand = 0x546c496e;
-        assertEquals(Command.stringify(rawCommand), "TlIn");
+        assertEquals(Utils.stringifyCommand(rawCommand), "TlIn");
     }
 
     @Test void testCharToIntConvertion() throws Exception {
@@ -50,7 +44,7 @@ public class ProtocolTest {
 
     @Test
     public void testReadClientPacket() throws Exception {
-        ByteBuffer buf = parseHexString("08188001000000000000002e000c3e74435076490004c0d5");
+        ByteBuffer buf = Utils.parseHexString("08188001000000000000002e000c3e74435076490004c0d5");
 
         PacketHeader header = PacketHeader.read(buf);
         assertEquals(header.bitmask     , PacketHeader.FLAG_ACKREQ, "bitmask");
@@ -67,8 +61,8 @@ public class ProtocolTest {
     }
 
     @Test
-    public void testCmdVer() {
-        ByteBuffer buf = parseHexString("000CA7B45F76657200020010");
+    public void testCmdVer() throws Exception {
+        ByteBuffer buf = Utils.parseHexString("000CA7B45F76657200020010");
         CmdFirmwareVersion cmd = (CmdFirmwareVersion)Command.read(buf);
         assertFalse(buf.hasRemaining());
         assertEquals(cmd.major, 2, "major");
@@ -77,16 +71,16 @@ public class ProtocolTest {
     }
 
     @Test
-    public void testCmdPin() {
-        ByteBuffer buf = parseHexString("003481985F70696E4154454D2054656C65766973696F6E2053747564696F007450888198507E2480800000A45009A7B401000000");
+    public void testCmdPin() throws Exception {
+        ByteBuffer buf = Utils.parseHexString("003481985F70696E4154454D2054656C65766973696F6E2053747564696F007450888198507E2480800000A45009A7B401000000");
         CmdProductId cmd = (CmdProductId)Command.read(buf);
         assertFalse(buf.hasRemaining());
         assertEquals(cmd.name, "ATEM Television Studio");
     }
 
     @Test
-    public void testCmdTop() {
-        ByteBuffer buf = parseHexString("001400A45F746F70011202000200000001000138");
+    public void testCmdTop() throws Exception {
+        ByteBuffer buf = Utils.parseHexString("001400A45F746F70011202000200000001000138");
         CmdTopology cmd = (CmdTopology)Command.read(buf);
         assertFalse(buf.hasRemaining());
         assertEquals(cmd.mes, 1, "mes");
@@ -104,8 +98,8 @@ public class ProtocolTest {
     }
 
     @Test
-    public void testCmdPrgi() {
-        ByteBuffer buf = parseHexString("000C7BA45072674900790001");
+    public void testCmdPrgi() throws Exception {
+        ByteBuffer buf = Utils.parseHexString("000C7BA45072674900790001");
         CmdProgramInput cmd = (CmdProgramInput)Command.read(buf);
         assertFalse(buf.hasRemaining());
         assertEquals(cmd.me, 0, "me");
@@ -114,19 +108,19 @@ public class ProtocolTest {
     }
 
     @Test
-    public void testCmdPrvi() {
-        ByteBuffer buf = parseHexString("0010006550727649008800060000000A");
+    public void testCmdPrvi() throws Exception {
+        ByteBuffer buf = Utils.parseHexString("0010006550727649008800060000000A");
         CmdPreviewInput cmd = (CmdPreviewInput)Command.read(buf);
         assertFalse(buf.hasRemaining());
         assertEquals(cmd.me, 0, "me");
         assertEquals(cmd.uc1, 136, "uc1");
         assertEquals(cmd.videoSource, 6, "videoSource");
-        assertEquals(cmd.uc2, 0, "uc2");
+        assertEquals(cmd.uc2, 10, "uc2");
     }
 
     @Test
-    public void testCmdTlin() {
-        ByteBuffer buf = parseHexString("00104F6E546C496E0006010000000002");
+    public void testCmdTlin() throws Exception {
+        ByteBuffer buf = Utils.parseHexString("00104F6E546C496E0006010000000002");
         CmdTallyByIndex cmd = (CmdTallyByIndex)Command.read(buf);
         assertFalse(buf.hasRemaining());
 
@@ -153,8 +147,8 @@ public class ProtocolTest {
 
 
     @Test
-    public void testCmdTlc() {
-        ByteBuffer buf = parseHexString("001000025F546C4300010000060C9828");
+    public void testCmdTlc() throws Exception {
+        ByteBuffer buf = Utils.parseHexString("001000025F546C4300010000060C9828");
         CmdTallyChannelConfig cmd = (CmdTallyChannelConfig)Command.read(buf);
         assertFalse(buf.hasRemaining());
         assertEquals(cmd.tallyChannels, 6, "tallyChannels");
@@ -163,8 +157,8 @@ public class ProtocolTest {
     }
 
     @Test
-    public void testCmdInpr() {
-        ByteBuffer buf = parseHexString("002C0000496E50720000426C61636B005019A720500A673400000000500C426C6B0001000100010012010007");
+    public void testCmdInpr() throws Exception {
+        ByteBuffer buf = Utils.parseHexString("002C0000496E50720000426C61636B005019A720500A673400000000500C426C6B0001000100010012010007");
         CmdInputProperties cmd = (CmdInputProperties)Command.read(buf);
         assertFalse(buf.hasRemaining());
         assertEquals(cmd.videoSource, 0, "videoSource");
@@ -176,8 +170,8 @@ public class ProtocolTest {
 
 
     @Test
-    public void testCmdAmtl() {
-        ByteBuffer buf = parseHexString("0020AAF0414D546C0007000100000200000301000400000500000600044D0100");
+    public void testCmdAmtl() throws Exception {
+        ByteBuffer buf = Utils.parseHexString("0020 AAF0 414D546C 0007 000100 000200 000301 000400 000500 000600 044D01 00");
         CmdAudioMixerTally cmd = (CmdAudioMixerTally) Command.read(buf);
         assertFalse(buf.hasRemaining());
 
@@ -192,8 +186,8 @@ public class ProtocolTest {
     }
 
     @Test
-    public void testCmdTlsr() {
-        ByteBuffer buf = parseHexString("00400000546C5372001200000000010100020000030000040000050000060203E80007D10007D2000BC2000BC3000BCC000BCD00271A00271B001B59001B5A00");
+    public void testCmdTlsr() throws Exception {
+        ByteBuffer buf = Utils.parseHexString("00400000546C5372001200000000010100020000030000040000050000060203E80007D10007D2000BC2000BC3000BCC000BCD00271A00271B001B59001B5A00");
         CmdTallyBySource cmd = (CmdTallyBySource)Command.read(buf);
         assertFalse(buf.hasRemaining());
         assertEquals(cmd.length, 18, "length");

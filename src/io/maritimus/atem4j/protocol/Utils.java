@@ -16,6 +16,8 @@
 
 package io.maritimus.atem4j.protocol;
 
+import com.sun.istack.internal.NotNull;
+
 import javax.xml.bind.DatatypeConverter;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -26,7 +28,23 @@ import java.util.Arrays;
  */
 public class Utils {
 
-    public static String readString(ByteBuffer buf, int maxLength) {
+    public static String readString(@NotNull ByteBuffer buf, int maxLength) throws ParseException {
+        if (buf == null) {
+            throw new IllegalArgumentException("buf must be not null");
+        }
+
+        if (maxLength <=0 ) {
+            throw new IllegalArgumentException("maxLength must be > 0");
+        }
+
+        if (buf.remaining() < maxLength) {
+            throw new ParseException(
+                    "Can't read string maxLength = %d from buf with remaining = %d",
+                    maxLength,
+                    buf.remaining()
+            );
+        }
+
         byte[] strBuf = new byte[maxLength];
         buf.get(strBuf);
         int k;
@@ -45,5 +63,18 @@ public class Utils {
         }
 
         return str;
+    }
+
+    public static String stringifyCommand(int rawCommand) {
+        String command = "" +
+                (char)((rawCommand >> 24) & 0xFF) +
+                (char)((rawCommand >> 16) & 0xFF) +
+                (char)((rawCommand >> 8) & 0xFF) +
+                (char)(rawCommand & 0xFF);
+        return command;
+    }
+
+    public static ByteBuffer parseHexString(String str) {
+        return ByteBuffer.wrap(DatatypeConverter.parseHexBinary(str.replace(" ", "")));
     }
 }

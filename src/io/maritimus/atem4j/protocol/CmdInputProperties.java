@@ -77,7 +77,7 @@ public class CmdInputProperties extends Command {
         );
     }
 
-    public static CmdInputProperties read(ByteBuffer body) {
+    public static CmdInputProperties read(ByteBuffer body) throws ParseException {
         int videoSource = body.getChar();
         String longName = Utils.readString(body, 20);
         String shortName = Utils.readString(body, 4);
