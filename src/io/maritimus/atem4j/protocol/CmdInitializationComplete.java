@@ -28,6 +28,6 @@ public class CmdInitializationComplete extends Command {
 
     @Override
     public String toString() {
-        return String.format("%s uc1 = %d", getClass().getSimpleName(), uc1);
+        return String.format("%s uc1 = 0x%h", getClass().getSimpleName(), uc1);
     }
 }
