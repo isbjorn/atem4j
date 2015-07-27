@@ -16,6 +16,8 @@
 package io.maritimus.atem4j.protocol;
 
 import com.sun.istack.internal.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.DatatypeConverter;
 import java.nio.ByteBuffer;
@@ -24,6 +26,8 @@ import java.nio.ByteBuffer;
  * Created by Oleg Akimov on 25/07/15.
  */
 public abstract class Command {
+
+    private static final Logger log = LoggerFactory.getLogger(Command.class);
 
     public static Command read(@NotNull ByteBuffer buf) throws ParseException {
         if (buf == null) {
@@ -38,7 +42,7 @@ public abstract class Command {
         }
 
         buf.mark();
-        
+
         int blockSize = buf.getChar();
         int payloadSize = blockSize - 2 /* size */ - 2 /* div start */ - 4 /* command */;
         int finalPosition = buf.position() + blockSize - 2;
@@ -66,6 +70,7 @@ public abstract class Command {
         int rawCommand = buf.getInt();
         String command = Utils.stringifyCommand(rawCommand);
         Command cmd;
+        byte[] block;
 
         switch (command) {
             /*
@@ -143,10 +148,6 @@ public abstract class Command {
 
             case "AMTl":
                 cmd = CmdAudioMixerTally.read(buf);
-                if (buf.position() < finalPosition) {
-                    buf.position(finalPosition);
-                }
-
                 break;
 
             case "TlSr":
@@ -154,22 +155,31 @@ public abstract class Command {
                 break;
 
             default:
-                byte[] payload = new byte[blockSize];
+                block = new byte[blockSize];
                 buf.reset();
-                buf.get(payload);
-                String payloadHex = DatatypeConverter.printHexBinary(payload).toUpperCase();
+                buf.get(block);
+                String payloadHex = DatatypeConverter.printHexBinary(block).toUpperCase();
                 cmd = new CmdUnknown(command, blockSize, payloadHex);
                 break;
         }
 
         // re-checking right buffer position
         if (buf.position() != finalPosition) {
-            throw new ParseException(
-                    "Command %s reader miss buf final position, expecting = %d, actual = %d",
-                    command,
-                    finalPosition,
-                    buf.position()
-            );
+            boolean isOverread = buf.position() > finalPosition;
+            block = new byte[blockSize];
+            buf.reset();
+            buf.get(block);
+            String payloadHex = DatatypeConverter.printHexBinary(block).toUpperCase();
+
+            if (isOverread) {
+                throw new ParseException(
+                        "Command %s reader overread block %s",
+                        command,
+                        payloadHex
+                );
+            }
+
+            log.warn(String.format("block can not be read fully: %s", payloadHex));
         }
 
         return cmd;
