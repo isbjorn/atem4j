@@ -154,6 +154,17 @@ public class ProtocolTest {
     }
 
     @Test
+    public void testPacketHelloWrite() throws Exception {
+        ByteBuffer expected = Utils.parseHexString("3014 4d80 0000 0000 00bd 0000 0100000000000000");
+        PacketHello p = PacketHello.createClientResendHello(0x4d80);
+        ByteBuffer out = ByteBuffer.allocate(12 + 8);
+        out.clear();
+        p.write(out);
+        out.flip();
+        assertEquals(expected.array(), out.array());
+    }
+
+    @Test
     public void testCreateClientResendHello() throws Exception {
         PacketHello p = PacketHello.createClientResendHello(2000);
 

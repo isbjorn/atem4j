@@ -18,6 +18,7 @@ package io.maritimus.atem4j.protocol;
 
 import com.sun.istack.internal.NotNull;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 /**
@@ -76,5 +77,11 @@ public class PacketHello extends Packet {
         );
 
         return new PacketHello(header, RESEND_STATUS, 0, RESEND_PAYLOAD);
+    }
+
+    @Override
+    public void write(@NotNull ByteBuffer buf) {
+        super.write(buf);
+        buf.put(Utils.parseHexString(payload));
     }
 }
