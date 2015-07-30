@@ -18,6 +18,7 @@ package io.maritimus.atem4j.protocol;
 import com.sun.istack.internal.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import javax.xml.bind.DatatypeConverter;
 import java.nio.ByteBuffer;
@@ -183,5 +184,9 @@ public abstract class Command {
         }
 
         return cmd;
+    }
+
+    public void write(@NotNull ByteBuffer buf) {
+        throw new RuntimeException("write is under construction");
     }
 }

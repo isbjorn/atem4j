@@ -72,7 +72,11 @@ public class PacketHeader {
     }
 
     public boolean isHello() {
-        return (this.bitmask & FLAG_HELLO) > 0;
+        return (this.bitmask & FLAG_HELLO) != 0;
+    }
+
+    public boolean isResend() {
+        return (this.bitmask & FLAG_RESEND) != 0;
     }
 
     @Override
@@ -117,6 +121,26 @@ public class PacketHeader {
         int packageId = buf.getChar();
 
         return new PacketHeader(bitmask, size, uid, ackId, packageId, unicorn);
+    }
+
+    public void write(@NotNull ByteBuffer buf) {
+        if (buf == null) {
+            throw new IllegalArgumentException("buf must be not null");
+        }
+
+        if (buf.remaining() < HEADER_LENGTH) {
+            throw new IllegalArgumentException(String.format(
+                    "buf is to short for header, remaining = %d",
+                    buf.remaining()
+            ));
+        }
+
+        int head = ((bitmask & MASK_BITMASK) << 8) | (size & MASK_SIZE);
+        buf.putChar((char)head);
+        buf.putChar((char)uid);
+        buf.putChar((char)ackId);
+        buf.putInt((int)unicorn);
+        buf.putChar((char)packageId);
     }
 
     /*

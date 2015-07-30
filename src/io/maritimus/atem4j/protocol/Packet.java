@@ -28,7 +28,7 @@ import java.util.List;
 public class Packet {
     public final PacketHeader header;
     public final List<Command> commands;
-
+    
     public Packet(@NotNull PacketHeader header, @NotNull List<Command> commands) {
         if (header == null) {
             throw new IllegalArgumentException("header must be not null");
@@ -45,15 +45,33 @@ public class Packet {
             throw new IllegalArgumentException("buf must be not null");
         }
 
-        PacketHeader header = PacketHeader.read(buf);
-        ArrayList<Command> commands = new ArrayList<>();
-
         try {
-            if (!header.isHello()) {
-                while (buf.hasRemaining()) {
-                    commands.add(Command.read(buf));
-                }
+            PacketHeader header = PacketHeader.read(buf);
+
+            if (buf.remaining() != header.size - PacketHeader.HEADER_LENGTH) {
+                throw new ParseException(
+                        "Packet header size = %d, but buf remaining = %d",
+                        header.size,
+                        buf.remaining()
+                );
             }
+
+            if (header.isHello()) {
+                buf.mark();
+                int connectionFlag = buf.get() & 0xFF;
+                buf.position(buf.position() + 2);   // skip 2 bytes
+                int connectionUptime = buf.get() & 0xFF;
+                buf.reset();
+                String payload = Utils.readHexString(buf);
+                return new PacketHello(header, connectionFlag, connectionUptime, payload);
+            }
+
+            ArrayList<Command> commands = new ArrayList<>();
+            while (buf.hasRemaining()) {
+                commands.add(Command.read(buf));
+            }
+            return new Packet(header, commands);
+
         } catch (ParseException ex) {
             throw ex;
         } catch (Throwable ex) {
@@ -63,7 +81,12 @@ public class Packet {
                     Utils.readHexString(buf),
                     ex.getMessage());
         }
+    }
 
-        return new Packet(header, commands);
+    public void write(@NotNull ByteBuffer buf) {
+        header.write(buf);
+        for (Command command : commands) {
+            command.write(buf);
+        }
     }
 }
