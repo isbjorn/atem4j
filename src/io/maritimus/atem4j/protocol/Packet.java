@@ -28,7 +28,7 @@ import java.util.List;
 public class Packet {
     public final PacketHeader header;
     public final List<Command> commands;
-    
+
     public Packet(@NotNull PacketHeader header, @NotNull List<Command> commands) {
         if (header == null) {
             throw new IllegalArgumentException("header must be not null");
@@ -84,6 +84,10 @@ public class Packet {
     }
 
     public void write(@NotNull ByteBuffer buf) {
+        if (buf == null) {
+            throw new IllegalArgumentException("buf must be not null");
+        }
+
         header.write(buf);
         for (Command command : commands) {
             command.write(buf);
