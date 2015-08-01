@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.maritimus.atem4j.protocol;
+package io.maritimus.atem4j.protocol.command;
 
 import com.sun.istack.internal.NotNull;
+import io.maritimus.atem4j.protocol.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import javax.xml.bind.DatatypeConverter;
 import java.nio.ByteBuffer;

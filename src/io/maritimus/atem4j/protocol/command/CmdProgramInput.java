@@ -14,20 +14,33 @@
  * limitations under the License.
  */
 
-package io.maritimus.atem4j.protocol;
+package io.maritimus.atem4j.protocol.command;
+
+import io.maritimus.atem4j.protocol.command.Command;
 
 /**
- * Created by Oleg Akimov on 28/07/15.
+ * Created by Oleg Akimov on 26/07/15.
  */
-public class CmdInitializationComplete extends Command {
-    public final int uc1;
+public class CmdProgramInput extends Command {
 
-    public CmdInitializationComplete(int uc1) {
+    public final int me;
+    public final int uc1;
+    public final int videoSource;
+
+    public CmdProgramInput(int me, int uc1, int videoSource) {
+        this.me = me;
         this.uc1 = uc1;
+        this.videoSource = videoSource;
     }
 
     @Override
     public String toString() {
-        return String.format("%s uc1 = 0x%h", getClass().getSimpleName(), uc1);
+        return String.format(
+                "%s me=%d, videoSource=%d uc1=%s",
+                getClass().getSimpleName(),
+                me,
+                videoSource,
+                Integer.toBinaryString(uc1)
+        );
     }
 }

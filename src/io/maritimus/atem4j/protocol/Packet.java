@@ -17,6 +17,7 @@
 package io.maritimus.atem4j.protocol;
 
 import com.sun.istack.internal.NotNull;
+import io.maritimus.atem4j.protocol.command.Command;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

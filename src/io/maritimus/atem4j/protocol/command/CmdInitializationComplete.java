@@ -14,24 +14,22 @@
  * limitations under the License.
  */
 
-package io.maritimus.atem4j.protocol;
+package io.maritimus.atem4j.protocol.command;
+
+import io.maritimus.atem4j.protocol.command.Command;
 
 /**
- * Created by Oleg Akimov on 26/07/15.
+ * Created by Oleg Akimov on 28/07/15.
  */
-public class CmdFirmwareVersion extends Command {
-    public final int major;
-    public final int minor;
-    public final String version;
+public class CmdInitializationComplete extends Command {
+    public final int uc1;
 
-    public CmdFirmwareVersion(int major, int minor) {
-        this.major = major;
-        this.minor = minor;
-        this.version = String.format("%d.%d", major, minor);
+    public CmdInitializationComplete(int uc1) {
+        this.uc1 = uc1;
     }
 
     @Override
     public String toString() {
-        return String.format("%s version=%s", getClass().getSimpleName(), version);
+        return String.format("%s uc1 = 0x%h", getClass().getSimpleName(), uc1);
     }
 }

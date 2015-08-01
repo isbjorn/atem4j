@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 
-package io.maritimus.atem4j.protocol;
+package io.maritimus.atem4j.protocol.command;
+
+import com.sun.istack.internal.NotNull;
+import io.maritimus.atem4j.protocol.command.Command;
 
 /**
- * Created by Oleg Akimov on 25/07/15.
+ * Created by Oleg Akimov on 26/07/15.
  */
-public class CmdPreviewInput extends Command {
-    public final int me;
-    public final int uc1;
-    public final int videoSource;
-    public final int uc2;
+public class CmdProductId extends Command {
+    public final String name;
 
-    public CmdPreviewInput(int me, int uc1, int videoSource, int uc2) {
-        this.me = me;
-        this.uc1 = uc1;
-        this.videoSource = videoSource;
-        this.uc2 = uc2;
+    public CmdProductId(@NotNull String name) {
+        this.name = name;
     }
 
     @Override
     public String toString() {
-        return String.format("%s me=%d videoSource=%d", getClass().getSimpleName(), me, videoSource);
+        return String.format("%s name=%s", getClass().getSimpleName(), name);
     }
 }

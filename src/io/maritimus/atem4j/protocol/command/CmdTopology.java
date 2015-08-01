@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package io.maritimus.atem4j.protocol;
+package io.maritimus.atem4j.protocol.command;
+
+import io.maritimus.atem4j.protocol.command.Command;
 
 /**
  * Created by Oleg Akimov on 26/07/15.

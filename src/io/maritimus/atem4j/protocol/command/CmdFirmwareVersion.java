@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 
-package io.maritimus.atem4j.protocol;
+package io.maritimus.atem4j.protocol.command;
 
 /**
- * Created by Oleg Akimov on 25/07/15.
+ * Created by Oleg Akimov on 26/07/15.
  */
-public class CmdSetPreviewInput extends Command {
-    public final int me;
-    public final int videoSource;
+public class CmdFirmwareVersion extends Command {
+    public final int major;
+    public final int minor;
+    public final String version;
 
-    public CmdSetPreviewInput(int me, int videoSource) {
-        this.me = me;
-        this.videoSource = videoSource;
+    public CmdFirmwareVersion(int major, int minor) {
+        this.major = major;
+        this.minor = minor;
+        this.version = String.format("%d.%d", major, minor);
     }
 
     @Override
     public String toString() {
-        return String.format("%s me=%d videoSource=%d", getClass().getSimpleName(), me, videoSource);
+        return String.format("%s version=%s", getClass().getSimpleName(), version);
     }
 }

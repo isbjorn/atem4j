@@ -15,6 +15,7 @@
  */
 package io.maritimus.atem4j.protocol;
 
+import io.maritimus.atem4j.protocol.command.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
@@ -121,7 +122,7 @@ public class ProtocolTest {
     @Test
     public void testCmdTlin() throws Exception {
         ByteBuffer buf = Utils.parseHexString("00104F6E546C496E0006010000000002");
-        CmdTallyByIndex cmd = (CmdTallyByIndex)Command.read(buf);
+        CmdTallyByIndex cmd = (CmdTallyByIndex) Command.read(buf);
         assertFalse(buf.hasRemaining());
 
         assertEquals(cmd.length, 6, "cmd length");

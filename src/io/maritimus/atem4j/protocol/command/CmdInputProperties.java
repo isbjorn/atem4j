@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package io.maritimus.atem4j.protocol;
+package io.maritimus.atem4j.protocol.command;
+
+import io.maritimus.atem4j.protocol.ParseException;
+import io.maritimus.atem4j.protocol.Utils;
 
 import java.nio.ByteBuffer;
 
