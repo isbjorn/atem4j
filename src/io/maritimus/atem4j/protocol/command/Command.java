@@ -148,7 +148,7 @@ public abstract class Command {
                 break;
 
             case "AMTl":
-                cmd = CmdAudioMixerTally.read(buf);
+                cmd = CmdAudioMixerTally.read(buf, payloadSize);
                 break;
 
             case "TlSr":
@@ -180,7 +180,7 @@ public abstract class Command {
                 );
             }
 
-            log.warn(String.format("block can not be read fully: %s", payloadHex));
+            log.warn(String.format("block for command = %s is not read fully, payload = %s", command, payloadHex));
         }
 
         return cmd;

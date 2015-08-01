@@ -184,6 +184,9 @@ public class ProtocolTest {
         assertFalse(cmd.isMixedIn(5));
         assertFalse(cmd.isMixedIn(6));
         assertTrue(cmd.isMixedIn(1101));
+
+        assertEquals(cmd.tailLength, 1);
+        assertEquals(cmd.tailHex, "00");
     }
 
     @Test

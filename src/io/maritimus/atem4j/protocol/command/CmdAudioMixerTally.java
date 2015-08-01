@@ -16,6 +16,7 @@
 
 package io.maritimus.atem4j.protocol.command;
 
+import io.maritimus.atem4j.protocol.Utils;
 import java.nio.ByteBuffer;
 
 /**
@@ -29,9 +30,14 @@ public class CmdAudioMixerTally extends Command {
     public final int length;
     public final int[][] statuses;
 
-    public CmdAudioMixerTally(int length, int[][] statuses) {
+    public final int tailLength;
+    public final String tailHex;
+
+    public CmdAudioMixerTally(int length, int[][] statuses, int tailLength, String tailHex) {
         this.length = length;
         this.statuses = statuses;
+        this.tailLength = tailLength;
+        this.tailHex = tailHex;
     }
 
     public int getStatus(int audioSource) {
@@ -69,14 +75,16 @@ public class CmdAudioMixerTally extends Command {
         );
     }
 
-    public static CmdAudioMixerTally read(ByteBuffer body) {
+    public static CmdAudioMixerTally read(ByteBuffer body, int payloadSize) {
         int length = body.getChar();
+        int tailLength = payloadSize - 2 - length * 3;
         int[][] statuses = new int[length][2];
         for (int j = 0; j < length; j++) {
             statuses[j][0] = body.getChar();
             statuses[j][1] = body.get() & 0xFF;
         }
 
-        return new CmdAudioMixerTally(length, statuses);
+        String tailHex = tailLength > 0 ? Utils.readHexString(body, tailLength) : "";
+        return new CmdAudioMixerTally(length, statuses, tailLength, tailHex);
     }
 }
