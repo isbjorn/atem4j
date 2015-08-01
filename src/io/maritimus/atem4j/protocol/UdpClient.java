@@ -130,7 +130,7 @@ public class UdpClient implements AutoCloseable {
     }
 
     public void stop() {
-        listener.onStop();
+        listener.onClientStop();
         isStopped = true;
     }
 

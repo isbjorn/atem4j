@@ -44,8 +44,8 @@ public class SilentUdpClientListener implements IUdpClientListener {
     }
 
     @Override
-    public void onStop() {
-        log.debug("onStop");
+    public void onClientStop() {
+        log.debug("onClientStop");
     }
 
     @Override

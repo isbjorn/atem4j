@@ -29,7 +29,7 @@ public interface IUdpClientListener {
 
     void onClientClose();
 
-    void onStop();
+    void onClientStop();
 
     void onParseException(ParseException ex);
 }
