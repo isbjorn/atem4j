@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package io.maritimus.atem4j.protocol;
+package io.maritimus.atem4j.protocol.udp;
+
+import io.maritimus.atem4j.protocol.Packet;
+import io.maritimus.atem4j.protocol.ParseException;
 
 import java.net.PortUnreachableException;
 

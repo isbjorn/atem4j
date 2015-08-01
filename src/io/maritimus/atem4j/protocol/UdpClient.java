@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package io.maritimus.atem4j.protocol;
+package io.maritimus.atem4j.protocol.udp;
 
 import com.sun.istack.internal.NotNull;
+import io.maritimus.atem4j.protocol.Packet;
+import io.maritimus.atem4j.protocol.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
