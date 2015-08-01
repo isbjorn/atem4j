@@ -22,11 +22,18 @@ import javax.xml.bind.DatatypeConverter;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Random;
 
 /**
  * Created by Oleg Akimov on 26/07/15.
  */
 public class Utils {
+
+    public static final Random rand = new Random();
+
+    public static int random(int min, int max) {
+        return rand.nextInt((max - min) + 1) + min;
+    }
 
     public static String readString(@NotNull ByteBuffer buf, int maxLength) throws ParseException {
         if (buf == null) {

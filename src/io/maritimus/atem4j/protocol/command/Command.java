@@ -45,7 +45,7 @@ public abstract class Command {
         buf.mark();
 
         int blockSize = buf.getChar();
-        int payloadSize = blockSize - 2 /* size */ - 2 /* div start */ - 4 /* command */;
+        int payloadSize = blockSize - 2 /* size */ - 2 /* div toConnecting */ - 4 /* command */;
         int finalPosition = buf.position() + blockSize - 2;
 
         if (blockSize < 2) {

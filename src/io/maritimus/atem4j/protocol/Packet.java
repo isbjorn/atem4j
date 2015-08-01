@@ -94,4 +94,9 @@ public class Packet {
             command.write(buf);
         }
     }
+
+    @Override
+    public String toString() {
+        return String.format("Packet %s commands=%d", header, commands.size());
+    }
 }

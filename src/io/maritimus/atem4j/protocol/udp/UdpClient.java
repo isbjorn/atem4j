@@ -19,6 +19,7 @@ package io.maritimus.atem4j.protocol.udp;
 import com.sun.istack.internal.NotNull;
 import io.maritimus.atem4j.protocol.Packet;
 import io.maritimus.atem4j.protocol.ParseException;
+import io.maritimus.atem4j.protocol.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,6 @@ import java.util.Random;
  */
 public class UdpClient implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(UdpClient.class);
-    public static final Random rand = new Random();
 
     public static final int DEFAULT_ATEM_PORT = 9910;
 
@@ -60,19 +60,27 @@ public class UdpClient implements AutoCloseable {
     public volatile boolean isStopped = false;
 
 
-    public static UdpClient create(InetSocketAddress atemAddress) throws java.io.IOException {
-        return new UdpClient(atemAddress, 0, new SilentUdpClientListener());
+    public static UdpClient create(InetSocketAddress atemAddress,
+                                   IUdpClientListener listener) throws java.io.IOException {
+        return new UdpClient(atemAddress, 0, listener);
     }
 
-    public static UdpClient create(String atemHost) throws java.io.IOException {
-        return create(createAtemAddress(atemHost, DEFAULT_ATEM_PORT));
+    public static UdpClient create(String atemHost,
+                                   IUdpClientListener listener) throws java.io.IOException {
+        return create(createAtemAddress(atemHost, DEFAULT_ATEM_PORT), listener);
     }
 
-    public static UdpClient create(String atemHost, int localPortMin, int localPortMax) throws java.io.IOException {
-        return create(createAtemAddress(atemHost), localPortMin, localPortMax);
+    public static UdpClient create(String atemHost,
+                                   int localPortMin,
+                                   int localPortMax,
+                                   IUdpClientListener listener) throws java.io.IOException {
+        return create(createAtemAddress(atemHost), localPortMin, localPortMax, listener);
     }
 
-    public static UdpClient create(InetSocketAddress atemAddresss, int localPortMin, int localPortMax) throws java.io.IOException {
+    public static UdpClient create(InetSocketAddress atemAddresss,
+                                   int localPortMin,
+                                   int localPortMax,
+                                   IUdpClientListener listener) throws java.io.IOException {
         if (localPortMax < localPortMin) {
             throw new IllegalArgumentException(String.format(
                     "localPortMin = %d must be lesser or equal to localPortMax = %d",
@@ -81,8 +89,7 @@ public class UdpClient implements AutoCloseable {
             ));
         }
 
-        IUdpClientListener listener = new SilentUdpClientListener();
-        int localPort = localPortMax == localPortMin ? localPortMin : rand.nextInt((localPortMax - localPortMin) + 1) + localPortMin;
+        int localPort = localPortMax == localPortMin ? localPortMin : Utils.random(localPortMin, localPortMax);
         return new UdpClient(atemAddresss, localPort, listener);
     }
 
@@ -134,6 +141,13 @@ public class UdpClient implements AutoCloseable {
     public void stop() {
         listener.onClientStop();
         isStopped = true;
+        if (channel.isOpen()) {
+            try {
+                channel.close();
+            } catch (IOException e) {
+                log.error("Can't close udp client channel", e);
+            }
+        }
     }
 
     public void loop() {
