@@ -42,7 +42,7 @@ public class UdpClient implements AutoCloseable {
 
     public static final int MAX_SEND_BUF = 4096;
     public static final int MAX_RECEIVE_BUF = 4096;
-    public static final int SO_RECEIVE_BUF = 16000;     // socket option
+    public static final int SO_RECEIVE_BUF = 64000;     // socket option
     public static final int SEND_TIMEOUT = 5;           // timeout between send ops in non-blocking mode
     public static final int RECEIVE_TIMEOUT = 5;
 
@@ -128,11 +128,20 @@ public class UdpClient implements AutoCloseable {
 
         SocketAddress localAddress = new InetSocketAddress(localPort);
 
-        log.debug("binding to " + localAddress);
         channel = DatagramChannel.open();
         channel.configureBlocking(false);
         channel.bind(localAddress);
         channel.connect(atemAddress);
+
+        if (channel.getOption(StandardSocketOptions.SO_RCVBUF) < SO_RECEIVE_BUF) {
+            channel.setOption(StandardSocketOptions.SO_RCVBUF, SO_RECEIVE_BUF);
+        }
+
+        log.debug(String.format(
+                "binding to %s with buf %d",
+                localAddress,
+                channel.getOption(StandardSocketOptions.SO_RCVBUF)
+        ));
 
         socket = channel.socket();
         this.localPort = socket.getLocalPort();
