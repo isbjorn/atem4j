@@ -27,8 +27,14 @@ import java.util.List;
  * Created by Oleg Akimov on 26/07/15.
  */
 public class Packet {
+    public static final List<Command> NO_COMMANDS = new ArrayList<>();
+
     public final PacketHeader header;
     public final List<Command> commands;
+
+    public Packet(@NotNull PacketHeader header) {
+        this(header, NO_COMMANDS);
+    }
 
     public Packet(@NotNull PacketHeader header, @NotNull List<Command> commands) {
         if (header == null) {
