@@ -75,6 +75,10 @@ public class PacketHeader {
         return (this.bitmask & FLAG_HELLO) != 0;
     }
 
+    public boolean isAckRequest () {
+        return (this.bitmask & FLAG_ACKREQ) != 0;
+    }
+
     public boolean isResend() {
         return (this.bitmask & FLAG_RESEND) != 0;
     }
