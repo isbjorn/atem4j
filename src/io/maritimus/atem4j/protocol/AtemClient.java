@@ -19,6 +19,7 @@ package io.maritimus.atem4j.protocol;
 import io.maritimus.atem4j.protocol.command.CmdInitializationComplete;
 import io.maritimus.atem4j.protocol.command.Command;
 import io.maritimus.atem4j.protocol.udp.IUdpClientListener;
+import io.maritimus.atem4j.protocol.udp.StateTimeoutException;
 import io.maritimus.atem4j.protocol.udp.UdpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,7 +121,7 @@ public class AtemClient implements IUdpClientListener {
         setMarkerItme(timeout);
     }
 
-    protected void toConnecting() {
+    protected void toConnecting() throws IOException {
         setState(STATE_CONNECTING);
 
         receiveQueue.clear();
@@ -145,16 +146,8 @@ public class AtemClient implements IUdpClientListener {
         udpThread.start();
 
         // send hello message
-        try {
-            client.send(PacketHello.createClientFirstHello(uid));
-            setMarkerItme(TIMEOUT_HELLO_MS);
-            log.debug("sending hello to atem");
-        } catch (PortUnreachableException ex) {
-            log.debug(String.format("atem %s is unreachable", client.atemAddress));
-        } catch (IOException ex) {
-            log.error("Can't send hello", ex);
-            toStopped();
-        }
+        sendHello();
+        setMarkerItme(TIMEOUT_HELLO_MS);
 
         // reset last time
         updateLastTime();
@@ -179,27 +172,33 @@ public class AtemClient implements IUdpClientListener {
                 break;
             }
 
-            switch(state) {
-                case STATE_SLEEPING:
-                    doSleeping();
-                    break;
-
-                case STATE_CONNECTING:
-                    doConnecting();
-                    break;
-
-                case STATE_INITIALIZING:
-                    doInitializing();
-                    break;
-
-                default:
-                    log.error(String.format("State %s is not supported yet", state));
-                    stop();
-                    break;
-            }
-
             try {
+                switch (state) {
+                    case STATE_SLEEPING:
+                        doSleeping();
+                        break;
+
+                    case STATE_CONNECTING:
+                        doConnecting();
+                        break;
+
+                    case STATE_INITIALIZING:
+                        doInitializing();
+                        break;
+
+                    default:
+                        log.error(String.format("State %s is not supported yet", state));
+                        stop();
+                        break;
+                }
+
                 Thread.sleep(LOOP_SLEEP_MS);
+            } catch (IOException ex) {
+                log.error("socket error", ex);
+                toStopped();
+            } catch (StateTimeoutException ex) {
+                log.info(ex.getMessage());
+                stop();
             } catch (InterruptedException e) {
                 log.debug("sleep is interrupted", e);
                 stop();
@@ -214,88 +213,105 @@ public class AtemClient implements IUdpClientListener {
         log.debug("loop is done");
     }
 
-    protected void doInitializing() {
-        Packet packet;
+    protected void makeInit(Command cmd) {
+        log.debug(String.format("skipping command on initializing: %s", cmd.getClass().getSimpleName()));
+    }
 
-        while(!receiveQueue.isEmpty()) {
-            packet = receiveQueue.poll();
+    protected void sendAck(Packet packet) throws IOException {
+        log.debug(String.format("sending ACK for package id = %d", packet.header.ackId));
+        //todo: impl
+    }
 
-            if (packet != null) {
-                if (packet.header.isHello()) {
-                    //todo: send hello ack
-                    log.debug("sending hello ack on initializing");
-                    break;
-                }
-
-                //todo: send ack
-                if (false) {
-                    log.debug(String.format("sending ACK for package id = %d", packet.header.ackId));
-                }
-
-                boolean completed = false;
-                for (Command cmd : packet.commands) {
-                    if (cmd instanceof CmdInitializationComplete) {
-                        completed = true;
-                    } else {
-                        log.debug(String.format("skipping command on initializing: %s", cmd.getClass().getSimpleName()));
-                    }
-                }
-
-                if (completed) {
-                    log.info("initialization complete");
-                    toWorking();
-                    return;
-                }
-            }
-        }
-
-        if (isLastTimeout(TIMEOUT_INITIALIZING_MS)) {
-            log.warn(String.format("initializing timeout to %s", this.atemAddress));
-            toStopped();
-            return;
+    protected void sendHello() throws IOException {
+        try {
+            client.send(PacketHello.createClientFirstHello(uid));
+            log.debug(String.format("sending hello to atem %s", client.atemAddress));
+        } catch (PortUnreachableException ex) {
+            log.debug(String.format("atem %s is unreachable", client.atemAddress));
         }
     }
 
-    protected void doConnecting() {
+    protected void resendHello() throws IOException {
+        try {
+            client.send(PacketHello.createClientResendHello(uid));
+            log.debug(String.format("resending hello to atem %s", client.atemAddress));
+        } catch (PortUnreachableException ex) {
+            log.debug(String.format("atem %s is unreachable", client.atemAddress));
+        }
+    }
+
+    protected void doInitializing() throws IOException, StateTimeoutException {
+
+        if (receiveQueue.isEmpty()) {
+            checkLastTimeout(TIMEOUT_INITIALIZING_MS);
+            return;
+        }
+
         Packet packet;
+        boolean completed = false;
 
-        while(!receiveQueue.isEmpty()) {
-            packet = receiveQueue.poll();
-            if (packet != null) {
-                if (packet.header.isHello()) {
+        queue:
+        while ((packet = receiveQueue.poll()) != null) {
 
-                    //todo: send hello ack
-                    log.debug("sending hello ack");
+            updateLastTime();
 
-                    toInitializing();
-                    return;
-                } else {
-                    log.debug(String.format("ignoring packet on connecting: %s", packet));
+            //ack only hello until full initialization
+            if (packet.header.isHello()) {
+                sendAck(packet);
+                continue;
+            }
+
+            for (Command cmd : packet.commands) {
+                if (cmd instanceof CmdInitializationComplete) {
+                    completed = true;
+                    continue;
                 }
+
+                makeInit(cmd);
+            }
+
+            if (completed) {
+                break;
             }
         }
 
-        if (isLastTimeout(TIMEOUT_CONNECTING_MS)) {
-            log.warn(String.format("connection timeout to %s", this.atemAddress));
-            toStopped();
+        if (completed) {
+            log.info("initialization complete");
+            toWorking();
+        }
+    }
+
+    protected void doConnecting() throws IOException, StateTimeoutException {
+
+        if (receiveQueue.isEmpty()) {
+            checkLastTimeout(TIMEOUT_CONNECTING_MS);
+            return;
+        }
+
+        Packet packet;
+
+        queue:
+        while ((packet = receiveQueue.poll()) != null) {
+
+            updateLastTime();
+
+            if (!packet.header.isHello()) {
+                log.debug(String.format("ignoring packet on connecting: %s", packet));
+            }
+
+            sendAck(packet);
+            toInitializing();
             return;
         }
 
         if (isMarkerTime()) {
-            try {
-                client.send(PacketHello.createClientResendHello(uid));
-                setMarkerItme(TIMEOUT_HELLO_MS);
-                log.debug("resending hello to atem");
-            } catch (PortUnreachableException ex) {
-                log.debug(String.format("atem %s is unreachable", client.atemAddress));
-            } catch (IOException ex) {
-                log.error("Can't REsend hello", ex);
-                toStopped();
-            }
+            resendHello();
+            setMarkerItme(TIMEOUT_HELLO_MS);
         }
     }
 
-    protected void doSleeping() {
+    protected void doSleeping() throws IOException {
+        // closing client
         if (client != null) {
             if (client.channel.isOpen()) {
                 log.debug("waiting for channel");
@@ -309,14 +325,7 @@ public class AtemClient implements IUdpClientListener {
 
         if (isMarkerTime()) {
             toConnecting();
-            return;
         }
-
-        if (!receiveQueue.isEmpty()) {
-            log.debug("cleaning receive queue");
-        }
-
-        log.debug("doing nothing - sleeping");
     }
 
     protected void updateLastTime() {
@@ -337,6 +346,12 @@ public class AtemClient implements IUdpClientListener {
 
     public boolean isLastTimeout(long timeout) {
         return lastTime == 0 ? false : System.currentTimeMillis() > lastTime + timeout;
+    }
+
+    public void checkLastTimeout(long timeout) throws StateTimeoutException {
+        if (isLastTimeout(timeout)) {
+            throw new StateTimeoutException("timeout on state %s", state);
+        }
     }
 
     @Override
