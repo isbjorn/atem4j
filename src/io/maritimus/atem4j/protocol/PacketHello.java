@@ -84,4 +84,18 @@ public class PacketHello extends Packet {
         super.write(buf);
         buf.put(Utils.parseHexString(payload));
     }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "%s | status=%s%s%s%s%s uptime=%d",
+                super.toString(),
+                connectionStatus == STATUS_CLIENT ? "CLT " : "",
+                connectionStatus == STATUS_CONNECTED ? "CON" : "",
+                connectionStatus == STATUS_FULLY_BOOKED ? "BOOKED" : "",
+                connectionStatus == STATUS_RECONNECT ? "RECON" : "",
+                connectionStatus > 4 ? String.format("UNKW:%d", connectionStatus) : "",
+                connectionUptime
+        );
+    }
 }
