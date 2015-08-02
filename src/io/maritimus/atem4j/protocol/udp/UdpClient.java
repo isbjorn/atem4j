@@ -43,8 +43,8 @@ public class UdpClient implements AutoCloseable {
     public static final int MAX_SEND_BUF = 4096;
     public static final int MAX_RECEIVE_BUF = 4096;
     public static final int SO_RECEIVE_BUF = 16000;     // socket option
-    public static final int SEND_TIMEOUT = 50;          // timeout between send ops in non-blocking mode
-    public static final int RECEIVE_TIMEOUT = 50;
+    public static final int SEND_TIMEOUT = 5;           // timeout between send ops in non-blocking mode
+    public static final int RECEIVE_TIMEOUT = 5;
 
     public final InetSocketAddress atemAddress;
     public final int localPort;

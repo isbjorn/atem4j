@@ -38,7 +38,7 @@ public class AtemClient implements IUdpClientListener {
     private static final Logger log = LoggerFactory.getLogger(AtemClient.class);
     public static final int RND_UID_MIN = 10000;
     public static final int RND_UID_MAX = 60000;
-    public static final long LOOP_SLEEP_MS = 50;
+    public static final long LOOP_SLEEP_MS = 5;
 
     public static final String STATE_SLEEPING = "SLEEPING";
     public static final String STATE_CONNECTING = "CONNECTING";
@@ -48,7 +48,7 @@ public class AtemClient implements IUdpClientListener {
 
     public static final long TIMEOUT_SLEEPING_MS = 100;
     public static final long TIMEOUT_HELLO_MS = 200;            // 0.2 sec
-    public static final long TIMEOUT_CONNECTING_MS = 2000;      // 2 sec
+    public static final long TIMEOUT_CONNECTING_MS = 4000;      // 2 sec by protocol, 4 sec for bad connection
     public static final long TIMEOUT_INITIALIZING_MS = 2000;    // 2 sec???
     public static final long TIMEOUT_WORKING_MS = 1500;         // 1.5 sec
     public static final long TIMEOUT_RECOVERING_MS = 2000;      // 2 sec
@@ -140,12 +140,12 @@ public class AtemClient implements IUdpClientListener {
 
         // create upd client
         try {
-            client = UdpClient.create(atemAddress, 50000, 50000, this);
+            client = UdpClient.create(atemAddress, 0, 0, this);
         } catch(IOException ex) {
             log.error("Can't create udp client", ex);
 
             try {
-               client = UdpClient.create(atemAddress, 5000, 5000, this);
+               client = UdpClient.create(atemAddress, 0, 0, this);
             } catch (IOException ex2) {
                 log.error("Can't create udp client (2nd try), aborting", ex2);
                 toStopped();
@@ -182,7 +182,7 @@ public class AtemClient implements IUdpClientListener {
     }
 
     public void loop() {
-        int j = 1000;
+        int j = 10000;
         loop: while(true) {
             if (isStopped) {
                 toStopped();
@@ -469,6 +469,7 @@ public class AtemClient implements IUdpClientListener {
 
     protected void updateLastTime() {
         lastTime = System.currentTimeMillis();
+        log.debug(String.format("update last time to %d", lastTime));
     }
 
     protected void setMarkerItme(long offset) {
@@ -489,6 +490,12 @@ public class AtemClient implements IUdpClientListener {
 
     public void checkLastTimeout(long timeout) throws StateTimeoutException {
         if (isLastTimeout(timeout)) {
+            log.debug(String.format(
+                    "last timeout check is failed, last time = %d, current time = %d, timeout = %d",
+                    lastTime,
+                    System.currentTimeMillis(),
+                    timeout
+            ));
             throw new StateTimeoutException("timeout on state %s", state);
         }
     }
