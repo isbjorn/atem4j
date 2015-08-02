@@ -41,8 +41,8 @@ public class UdpClient implements AutoCloseable {
     public static final int MAX_SEND_BUF = 4096;
     public static final int MAX_RECEIVE_BUF = 4096;
     public static final int SO_RECEIVE_BUF = 64000;     // socket option
-    public static final int SEND_TIMEOUT = 5;           // timeout between send ops in non-blocking mode
-    public static final int RECEIVE_TIMEOUT = 5;
+    public static final int SEND_TIMEOUT = 1;           // timeout between send ops in non-blocking mode
+    public static final int RECEIVE_TIMEOUT = 1;
 
     public final InetSocketAddress atemAddress;
     public final int localPort;
@@ -196,11 +196,13 @@ public class UdpClient implements AutoCloseable {
                         inQueue.notifyAll();
                     }
                     listener.onPacketReceived(packet);
+                    /*
                     log.debug(String.format(
                             "UDP packet #%d received from server: %s",
                             num,
                             packet
                     ));
+                    */
                 } catch (ParseException ex) {
                     listener.onParseException(ex);
                 }
