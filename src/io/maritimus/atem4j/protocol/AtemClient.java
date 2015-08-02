@@ -64,10 +64,20 @@ public class AtemClient implements IUdpClientListener {
 
     public final InetSocketAddress atemAddress;
 
+    /*
     public static AtemClient create(InetSocketAddress atemAddress) {
         AtemClient client = new AtemClient(atemAddress);
         client.toStopped();
         return client;
+    }
+    */
+
+    public String getAtemHost() {
+        return atemAddress.toString();
+    }
+
+    public String getState() {
+        return state;
     }
 
     protected AtemClient(InetSocketAddress atemAddress) {

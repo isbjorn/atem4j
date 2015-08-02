@@ -60,6 +60,47 @@ public class CmdTallyBySource extends Command {
         return sources;
     }
 
+    public boolean hasVideoSource(int videoSource) {
+        for (int j = 0; j < statuses.length; j++) {
+            if (videoSource == statuses[j][0]) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean equals (Object object) {
+        if (object == null) {
+            return false;
+        }
+
+        if (!(object instanceof CmdTallyBySource)) {
+            return false;
+        }
+
+        CmdTallyBySource that = (CmdTallyBySource)object;
+
+        if (length != that.length) {
+            return false;
+        }
+
+        int[] sources = getVideoSources();
+
+        for (int j = 0; j < sources.length; j++) {
+            if (!that.hasVideoSource(sources[j])) {
+                return false;
+            }
+
+            if (getStatus(j) != that.getStatus(j)) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
     @Override
     public String toString() {
         String stats = "";
