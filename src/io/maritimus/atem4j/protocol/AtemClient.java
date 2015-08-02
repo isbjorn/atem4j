@@ -27,8 +27,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.PortUnreachableException;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by Oleg Akimov on 01/08/15.
@@ -38,7 +36,7 @@ public class AtemClient implements IUdpClientListener {
     private static final Logger log = LoggerFactory.getLogger(AtemClient.class);
     public static final int RND_UID_MIN = 10000;
     public static final int RND_UID_MAX = 60000;
-    public static final long LOOP_SLEEP_MS = 5;
+    public static final long LOOP_SLEEP_MS = 50;
 
     public static final String STATE_SLEEPING = "SLEEPING";
     public static final String STATE_CONNECTING = "CONNECTING";
@@ -61,7 +59,6 @@ public class AtemClient implements IUdpClientListener {
     private int uid = 0;
     private long lastTime = 0;      // last server answers time
     private long markerTime = 0;    // marker time, ex.: hello timeout
-    private BlockingQueue<Packet> receiveQueue = new LinkedBlockingQueue<>();
 
     private volatile boolean isStopped = false;
 
@@ -128,15 +125,11 @@ public class AtemClient implements IUdpClientListener {
             client.stop();
         }
 
-        receiveQueue.clear();
-
         setMarkerItme(timeout);
     }
 
     protected void toConnecting() throws IOException {
         setState(STATE_CONNECTING);
-
-        receiveQueue.clear();
 
         // create upd client
         try {
@@ -218,7 +211,13 @@ public class AtemClient implements IUdpClientListener {
                         break;
                 }
 
-                Thread.sleep(LOOP_SLEEP_MS);
+                if (client == null) {
+                    Thread.sleep(LOOP_SLEEP_MS);
+                } else {
+                    synchronized (client.inQueue) {
+                        client.inQueue.wait(LOOP_SLEEP_MS);
+                    }
+                }
             } catch (IOException ex) {
                 log.error("socket error", ex);
                 toStopped();
@@ -333,14 +332,14 @@ public class AtemClient implements IUdpClientListener {
     }
 
     protected void doWorking() throws IOException, StateTimeoutException {
-        if (receiveQueue.isEmpty()) {
+        if (client.inQueue.isEmpty()) {
             checkLastTimeout(TIMEOUT_WORKING_MS);
             return;
         }
 
         Packet packet;
         queue:
-        while ((packet = receiveQueue.poll()) != null) {
+        while ((packet = client.inQueue.poll()) != null) {
 
             updateLastTime();
 
@@ -362,7 +361,7 @@ public class AtemClient implements IUdpClientListener {
 
     protected void doInitializing() throws IOException, StateTimeoutException {
 
-        if (receiveQueue.isEmpty()) {
+        if (client.inQueue.isEmpty()) {
             checkLastTimeout(TIMEOUT_INITIALIZING_MS);
             return;
         }
@@ -371,7 +370,7 @@ public class AtemClient implements IUdpClientListener {
         boolean completed = false;
 
         queue:
-        while ((packet = receiveQueue.poll()) != null) {
+        while ((packet = client.inQueue.poll()) != null) {
 
             updateLastTime();
 
@@ -407,7 +406,7 @@ public class AtemClient implements IUdpClientListener {
 
     protected void doConnecting() throws IOException, StateTimeoutException {
 
-        if (receiveQueue.isEmpty()) {
+        if (client.inQueue.isEmpty()) {
             checkLastTimeout(TIMEOUT_CONNECTING_MS);
             return;
         }
@@ -415,7 +414,7 @@ public class AtemClient implements IUdpClientListener {
         Packet packet;
 
         queue:
-        while ((packet = receiveQueue.poll()) != null) {
+        while ((packet = client.inQueue.poll()) != null) {
 
             updateLastTime();
 
@@ -436,7 +435,7 @@ public class AtemClient implements IUdpClientListener {
 
     protected void doRecovering() throws IOException, StateTimeoutException {
 
-        if (!receiveQueue.isEmpty()) {
+        if (!client.inQueue.isEmpty()) {
             toWorking();
             return;
         }
@@ -503,7 +502,6 @@ public class AtemClient implements IUdpClientListener {
     @Override
     public void onPacketReceived(Packet packet) {
         log.trace(String.format("onPacketReceived %s", packet.toString()));
-        receiveQueue.add(packet);
     }
 
     @Override

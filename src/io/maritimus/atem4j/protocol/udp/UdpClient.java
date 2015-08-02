@@ -24,13 +24,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
-import java.net.PortUnreachableException;
-import java.net.SocketAddress;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by Oleg Akimov on 30/07/15.
@@ -54,6 +52,8 @@ public class UdpClient implements AutoCloseable {
     public final byte[] inBuf = new byte[MAX_RECEIVE_BUF];
     public final ByteBuffer inBB = ByteBuffer.wrap(inBuf);
     public final ByteBuffer outBB = ByteBuffer.allocateDirect(MAX_SEND_BUF);
+
+    public final ConcurrentLinkedQueue<Packet> inQueue = new ConcurrentLinkedQueue<>();
 
     public final IUdpClientListener listener;
 
@@ -148,6 +148,7 @@ public class UdpClient implements AutoCloseable {
     }
 
     public void stop() {
+        inQueue.clear();
         listener.onClientStop();
         isStopped = true;
         if (channel.isOpen()) {
@@ -190,6 +191,10 @@ public class UdpClient implements AutoCloseable {
                 num = num + 1;
                 try {
                     Packet packet = Packet.read(inBB);
+                    synchronized (inQueue) {
+                        inQueue.add(packet);
+                        inQueue.notifyAll();
+                    }
                     listener.onPacketReceived(packet);
                     log.debug(String.format(
                             "UDP packet #%d received from server: %s",
